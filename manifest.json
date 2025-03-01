@@ -1,0 +1,25 @@
+{
+    "required_api_version": "^2.0.0",
+    "name": "CPF and CNPJ Generator",
+    "description": "Generates valid CPF and CNPJ numbers and copies them to the clipboard",
+    "developer_name": "Your Name",
+    "icon": "images/icon.png",
+    "options": {
+        "query_debounce": 0.05
+    },
+    "preferences": [
+        {
+            "id": "keyword",
+            "type": "keyword",
+            "name": "Keyword",
+            "default_value": "doc"
+        },
+        {
+            "id": "stay_open",
+            "type": "select",
+            "name": "Keep Ulauncher open after copying",
+            "default_value": "no",
+            "options": ["yes", "no"]
+        }
+    ]
+}
