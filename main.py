@@ -61,7 +61,7 @@ class KeywordQueryEventListener(EventListener):
         if "cpf" in query.lower():
             items.append(
                 ExtensionResultItem(
-                    icon='images/cpf.webp',
+                    icon='images/cpf.png',
                     name='Gerar CPF',
                     description='Clique para gerar um CPF válido e copiar para a área de transferência',
                     on_enter=ExtensionCustomAction("cpf", keep_app_open=keep_app_open)
@@ -70,7 +70,7 @@ class KeywordQueryEventListener(EventListener):
         elif "cnpj" in query.lower():
             items.append(
                 ExtensionResultItem(
-                    icon='images/cnpj.webp',
+                    icon='images/cnpj.png',
                     name='Gerar CNPJ',
                     description='Clique para gerar um CNPJ válido e copiar para a área de transferência',
                     on_enter=ExtensionCustomAction("cnpj", keep_app_open=keep_app_open)
@@ -80,7 +80,7 @@ class KeywordQueryEventListener(EventListener):
             # Sem argumento específico: mostra ambas as opções
             items.append(
                 ExtensionResultItem(
-                    icon='images/cpf.webp',
+                    icon='images/cpf.png',
                     name='Gerar CPF',
                     description='Gera um CPF válido e copia para a área de transferência',
                     on_enter=ExtensionCustomAction("cpf", keep_app_open=keep_app_open)
@@ -88,7 +88,7 @@ class KeywordQueryEventListener(EventListener):
             )
             items.append(
                 ExtensionResultItem(
-                    icon='images/cnpj.webp',
+                    icon='images/cnpj.png',
                     name='Gerar CNPJ',
                     description='Gera um CNPJ válido e copia para a área de transferência',
                     on_enter=ExtensionCustomAction("cnpj", keep_app_open=keep_app_open)
