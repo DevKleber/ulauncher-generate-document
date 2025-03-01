@@ -1,15 +1,12 @@
 import random
-import webbrowser
 from ulauncher.api.client.Extension import Extension
 from ulauncher.api.client.EventListener import EventListener
-from ulauncher.api.shared.event import KeywordQueryEvent, ItemEnterEvent
+from ulauncher.api.shared.event import KeywordQueryEvent
 from ulauncher.api.shared.item.ExtensionResultItem import ExtensionResultItem
 from ulauncher.api.shared.action.RenderResultListAction import RenderResultListAction
 from ulauncher.api.shared.action.CopyToClipboardAction import CopyToClipboardAction
-from ulauncher.api.shared.action.HideWindowAction import HideWindowAction
-from ulauncher.api.shared.action.ExtensionCustomAction import ExtensionCustomAction
 
-# Funções para gerar CPF e CNPJ válidos
+# Functions to generate valid CPF and CNPJ
 def gerar_cpf(formatted: bool = True) -> str:
     cpf = [random.randint(0, 9) for _ in range(9)]
     soma = sum((10 - i) * cpf[i] for i in range(9))
@@ -38,78 +35,63 @@ def gerar_cnpj(formatted: bool = True) -> str:
         return f"{cnpj_str[:2]}.{cnpj_str[2:5]}.{cnpj_str[5:8]}/{cnpj_str[8:12]}-{cnpj_str[12:]}"
     return cnpj_str
 
-# Extensão principal
 class DocumentGeneratorExtension(Extension):
-
     def __init__(self):
         super(DocumentGeneratorExtension, self).__init__()
         self.subscribe(KeywordQueryEvent, KeywordQueryEventListener())
-        self.subscribe(ItemEnterEvent, ItemEnterEventListener())
 
-# Exibe as opções na janela de query do Ulauncher
 class KeywordQueryEventListener(EventListener):
     def on_event(self, event, extension):
-        # Obter argumento da query
-        query = event.get_argument() or ""
-
-        # Configuração se a janela deve permanecer aberta após copiar
-        keep_app_open = extension.preferences["stay_open"] == "yes"
-
+        query = (event.get_argument() or "").lower().strip()
         items = []
-
-        # Se o usuário digitar "cpf" ou "cnpj" como argumento, podemos mostrar apenas essa opção
-        if "cpf" in query.lower():
+        
+        # If the user types "cpf", show CPF only.
+        if query == "cpf":
+            cpf = gerar_cpf(formatted=True)
             items.append(
                 ExtensionResultItem(
                     icon='images/cpf.png',
-                    name='Gerar CPF',
-                    description='Clique para gerar um CPF válido e copiar para a área de transferência',
-                    on_enter=ExtensionCustomAction("cpf", keep_app_open=keep_app_open)
+                    name=cpf,
+                    description='Valid CPF generated and copied to clipboard',
+                    highlightable=False,
+                    on_enter=CopyToClipboardAction(cpf)
                 )
             )
-        elif "cnpj" in query.lower():
+        # If the user types "cnpj", show CNPJ only.
+        elif query == "cnpj":
+            cnpj = gerar_cnpj(formatted=True)
             items.append(
                 ExtensionResultItem(
                     icon='images/cnpj.png',
-                    name='Gerar CNPJ',
-                    description='Clique para gerar um CNPJ válido e copiar para a área de transferência',
-                    on_enter=ExtensionCustomAction("cnpj", keep_app_open=keep_app_open)
+                    name=cnpj,
+                    description='Valid CNPJ generated and copied to clipboard',
+                    highlightable=False,
+                    on_enter=CopyToClipboardAction(cnpj)
                 )
             )
+        # Otherwise, show both options.
         else:
-            # Sem argumento específico: mostra ambas as opções
+            cpf = gerar_cpf(formatted=True)
+            cnpj = gerar_cnpj(formatted=True)
             items.append(
                 ExtensionResultItem(
                     icon='images/cpf.png',
-                    name='Gerar CPF',
-                    description='Gera um CPF válido e copia para a área de transferência',
-                    on_enter=ExtensionCustomAction("cpf", keep_app_open=keep_app_open)
+                    name=cpf,
+                    description='Valid CPF generated and copied to clipboard',
+                    highlightable=False,
+                    on_enter=CopyToClipboardAction(cpf)
                 )
             )
             items.append(
                 ExtensionResultItem(
                     icon='images/cnpj.png',
-                    name='Gerar CNPJ',
-                    description='Gera um CNPJ válido e copia para a área de transferência',
-                    on_enter=ExtensionCustomAction("cnpj", keep_app_open=keep_app_open)
+                    name=cnpj,
+                    description='Valid CNPJ generated and copied to clipboard',
+                    highlightable=False,
+                    on_enter=CopyToClipboardAction(cnpj)
                 )
             )
-
         return RenderResultListAction(items)
-
-# Ao selecionar uma opção, gera o documento e copia para a área de transferência
-class ItemEnterEventListener(EventListener):
-    def on_event(self, event, extension):
-        acao = event.get_data()
-        if acao == "cpf":
-            doc = gerar_cpf(formatted=True)
-        elif acao == "cnpj":
-            doc = gerar_cnpj(formatted=True)
-        else:
-            doc = ""
-
-        # Copia o documento gerado para a área de transferência
-        return CopyToClipboardAction(doc)
 
 if __name__ == '__main__':
     DocumentGeneratorExtension().run()
