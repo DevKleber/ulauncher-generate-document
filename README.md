@@ -1,54 +1,13 @@
-# CPF and CNPJ Generator for Ulauncher
+# Brazilian Data Generator
 
-This extension for [Ulauncher](https://ulauncher.io/) quickly generates valid Brazilian CPF and CNPJ numbers and copies them directly to your clipboard.
+A Ulauncher extension that generates a wide range of valid Brazilian data on the fly. With this tool, you can quickly generate CPF, CNPJ, RG, names, addresses (with consistent city/state data), postal codes, phone numbers, birth dates, email addresses, and even a complete data set—all with a single command.
 
----
+![Demo](demo.gif)
 
-## How It Works
+## Features
 
-- **Generation Functions:**  
-  - `gerar_cpf()`: Creates a CPF by generating 9 random digits and calculating 2 check digits.  
-  - `gerar_cnpj()`: Creates a CNPJ by generating 12 random digits and calculating 2 check digits.
-
-- **Ulauncher Integration:**  
-  The extension listens for keyword queries in Ulauncher. Depending on your input:
-  - Typing `doc cpf` will display a CPF option.
-  - Typing `doc cnpj` will display a CNPJ option.
-  - If no filter is provided, both options appear.
-  
-  When you select an option, the generated number is automatically copied to your clipboard.
-
----
-
-## How to Use
-
-1. **Install the Extension:**
-   - **Clone or Download:**  
-     ```bash
-     git clone https://github.com/YOUR_USERNAME/ulauncher-cpf-cnpj-generator.git
-     ```
-   - **Copy Files:**  
-     Place the extension folder in your Ulauncher extensions directory, typically:
-     ```
-     ~/.local/share/ulauncher/extensions/cpf-cnpj-generator
-     ```
-   - **Restart Ulauncher:**  
-     Restart or relaunch Ulauncher to load the extension.
-
-2. **Generate a Document:**
-   - **Activate Ulauncher:**  
-     Press your Ulauncher shortcut (e.g., <kbd>Ctrl + Space</kbd>).
-   - **Type the Keyword:**  
-     Enter the keyword defined in `manifest.json` (default is `doc`).
-   - **Filter (Optional):**  
-     - Type `doc cpf` to generate and copy a CPF.
-     - Type `doc cnpj` to generate and copy a CNPJ.
-     - If no filter is used, both options will be displayed.
-   - **Select an Option:**  
-     Press <kbd>Enter</kbd> on the desired result. The generated CPF or CNPJ will be copied to your clipboard automatically.
-
----
-
-## License
-
-This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
+- **CPF & CNPJ Generation:** Creates valid CPF and CNPJ numbers using check-digit algorithms.
+- **Additional Data:** Generates RG, full names (using an extensive list of first and last names), realistic addresses (matching cities with their states), postal codes, phone numbers, birth dates, and emails.
+- **Consistent Addresses:** Uses a dictionary of municipalities to ensure that if a state is chosen, a municipality from that state is generated.
+- **Custom Icons:** Displays a custom icon for each generated data type if available, with fallback defaults.
+- **Easy to Use:** Trigger the extension with your chosen keyword and select the data type to copy it to your clipboard.
