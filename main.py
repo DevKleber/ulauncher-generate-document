@@ -22,20 +22,24 @@ from datafaker.municipalities import municipalities
 
 logger = logging.getLogger(__name__)
 
+# Define absolute paths for images
+BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+IMAGES_DIR = os.path.join(BASE_DIR, "images")
+
+def get_icon(key, default='doc.png'):
+    icon_path = os.path.join(IMAGES_DIR, f"{key}.png")
+    if os.path.exists(icon_path):
+        return icon_path
+    else:
+        return os.path.join(IMAGES_DIR, default)
 
 def calculate_digit(numbers, weights):
     total = sum(int(n) * p for n, p in zip(numbers, weights))
     remainder = total % 11
     return '0' if remainder < 2 else str(11 - remainder)
 
-
 def generate_random_number(count):
     return ''.join(random.choice(string.digits) for _ in range(count))
-
-
-def get_icon(key, default='images/icon.png'):
-    icon_path = f'images/{key}.png'
-    return icon_path if os.path.exists(icon_path) else default
 
 
 class DataGenerator:
@@ -44,7 +48,7 @@ class DataGenerator:
         self.first_names = first_names
         self.last_names = last_names
         self.streets = streets
-        # We use the 'municipalities' dictionary to map states to their cities
+        # Usamos o dicionário 'municipalities' para mapear estados aos municípios
 
     def generate_cpf(self, formatted=True) -> str:
         nine_digits = generate_random_number(9)
@@ -85,7 +89,7 @@ class DataGenerator:
         street = random.choice(self.streets)
         number = random.randint(1, 2000)
         complement = random.choice([f"Apt {random.randint(1, 500)}", "", "House"])
-        # Choose a state (key from the municipalities dict) and a city from that state.
+        # Escolhe um estado (chave do dicionário) e um município associado
         state = random.choice(list(municipalities.keys()))
         city = random.choice(municipalities[state])
         address = f"{street}, {number}"
@@ -102,7 +106,6 @@ class DataGenerator:
 
     def generate_phone(self, with_ddd=True) -> str:
         ddd = generate_random_number(2) if with_ddd else ""
-        # Randomly choose between a mobile (9 digits) or landline (8 digits)
         if random.choice([True, False]):
             number = "9" + generate_random_number(8)
         else:
@@ -184,7 +187,7 @@ class KeywordQueryEventListener(EventListener):
             friendly_name, gen_func = GENERATORS[query]
             items.append(
                 ExtensionResultItem(
-                    icon=get_icon(query, default='images/icon.png'),
+                    icon=get_icon(query, default='doc.png'),
                     name=friendly_name,
                     description=f"Generates {friendly_name} and copies it to clipboard",
                     highlightable=False,
@@ -196,7 +199,7 @@ class KeywordQueryEventListener(EventListener):
         for key, (friendly_name, _) in sorted(GENERATORS.items()):
             items.append(
                 ExtensionSmallResultItem(
-                    icon=get_icon(key, default='images/doc.png'),
+                    icon=get_icon(key, default='doc.png'),
                     name=friendly_name,
                     on_enter=ExtensionCustomAction(key, keep_app_open=True)
                 )
@@ -215,7 +218,7 @@ class ItemEnterEventListener(EventListener):
             value = gen_func(self.generator)
             return RenderResultListAction([
                 ExtensionResultItem(
-                    icon=get_icon(provider, default='images/icon.png'),
+                    icon=get_icon(provider, default='doc.png'),
                     name=str(value),
                     description=f"{friendly_name} generated and copied to clipboard",
                     highlightable=False,
@@ -225,7 +228,7 @@ class ItemEnterEventListener(EventListener):
         else:
             return RenderResultListAction([
                 ExtensionResultItem(
-                    icon='images/icon.png',
+                    icon=get_icon('icon', default='doc.png'),
                     name="Type not found",
                     highlightable=False,
                     on_enter=HideWindowAction()
