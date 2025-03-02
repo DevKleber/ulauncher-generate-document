@@ -14,7 +14,6 @@ from ulauncher.api.shared.action.CopyToClipboardAction import CopyToClipboardAct
 from ulauncher.api.shared.action.HideWindowAction import HideWindowAction
 from ulauncher.api.shared.action.ExtensionCustomAction import ExtensionCustomAction
 
-# Import data from separate files inside the "datafaker" folder
 from datafaker.first_names import first_names
 from datafaker.last_names import last_names
 from datafaker.streets import streets
@@ -22,7 +21,6 @@ from datafaker.municipalities import municipalities
 
 logger = logging.getLogger(__name__)
 
-# Define absolute paths for images
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 IMAGES_DIR = os.path.join(BASE_DIR, "images")
 
@@ -44,11 +42,9 @@ def generate_random_number(count):
 
 class DataGenerator:
     def __init__(self):
-        # Use imported data lists
         self.first_names = first_names
         self.last_names = last_names
         self.streets = streets
-        # Usamos o dicionário 'municipalities' para mapear estados aos municípios
 
     def generate_cpf(self, formatted=True) -> str:
         nine_digits = generate_random_number(9)
@@ -89,7 +85,7 @@ class DataGenerator:
         street = random.choice(self.streets)
         number = random.randint(1, 2000)
         complement = random.choice([f"Apt {random.randint(1, 500)}", "", "House"])
-        # Escolhe um estado (chave do dicionário) e um município associado
+
         state = random.choice(list(municipalities.keys()))
         city = random.choice(municipalities[state])
         address = f"{street}, {number}"
@@ -151,7 +147,6 @@ class DataGenerator:
         return data
 
 
-# Dictionary mapping data types to friendly name and generation function
 GENERATORS = {
     "cpf": ("CPF", lambda gen: gen.generate_cpf()),
     "cnpj": ("CNPJ", lambda gen: gen.generate_cnpj()),
