@@ -137,7 +137,7 @@ class KeywordQueryEventListener(EventListener):
             )
             items.append(
                 ExtensionResultItem(
-                    icon='images/person.png',
+                    icon='images/cnpj.png',
                     name=pessoa['Nome'],
                     description='Dados completos da pessoa gerados e copiados para a área de transferência',
                     highlightable=False,
