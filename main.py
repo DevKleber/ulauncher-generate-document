@@ -13,6 +13,12 @@ from ulauncher.api.shared.action.CopyToClipboardAction import CopyToClipboardAct
 from ulauncher.api.shared.action.HideWindowAction import HideWindowAction
 from ulauncher.api.shared.action.ExtensionCustomAction import ExtensionCustomAction
 
+# Import data from separate files
+from datafaker.first_names import first_names
+from datafaker.last_names import last_names
+from datafaker.streets import streets
+from datafaker.municipalities import municipalities
+
 logger = logging.getLogger(__name__)
 
 
@@ -28,23 +34,12 @@ def generate_random_number(count):
 
 class DataGenerator:
     def __init__(self):
-        # Lists of sample data in Portuguese
-        self.first_names = [
-            "Ana", "Bruno", "Carlos", "Daniela", "Eduardo", "Fernanda",
-            "Gabriel", "Helena", "Igor", "Juliana", "Lucas", "Mariana"
-        ]
-        self.last_names = [
-            "Silva", "Souza", "Costa", "Santos", "Oliveira", "Pereira",
-            "Rodrigues", "Almeida", "Lima", "Gomes"
-        ]
-        self.streets = [
-            "Rua das Flores", "Avenida Brasil", "Travessa da Paz", "Alameda dos Anjos",
-            "Rua do Sol"
-        ]
-        self.cities = [
-            "São Paulo", "Rio de Janeiro", "Belo Horizonte", "Curitiba", "Porto Alegre"
-        ]
-        self.states = ["SP", "RJ", "MG", "PR", "RS"]
+        # Use imported data lists
+        self.first_names = first_names
+        self.last_names = last_names
+        self.streets = streets
+        # Não precisamos mais de uma lista de cidades e estados separados,
+        # pois o dicionário 'municipalities' já mapeia os estados para seus municípios.
 
     def generate_cpf(self, formatted=True) -> str:
         nine_digits = generate_random_number(9)
@@ -85,8 +80,9 @@ class DataGenerator:
         street = random.choice(self.streets)
         number = random.randint(1, 2000)
         complement = random.choice([f"Apt {random.randint(1, 500)}", "", "House"])
-        city = random.choice(self.cities)
-        state = random.choice(self.states)
+        # Sorteia um estado (a chave do dicionário) e depois um município deste estado.
+        state = random.choice(list(municipalities.keys()))
+        city = random.choice(municipalities[state])
         address = f"{street}, {number}"
         if complement:
             address += f", {complement}"
@@ -101,9 +97,7 @@ class DataGenerator:
 
     def generate_phone(self, with_ddd=True) -> str:
         ddd = generate_random_number(2) if with_ddd else ""
-        # Randomly choose between a mobile (9 digits) or landline (8 digits)
         if random.choice([True, False]):
-            # Mobile: starts with 9 and has 9 digits
             number = "9" + generate_random_number(8)
         else:
             number = generate_random_number(8)
@@ -125,9 +119,8 @@ class DataGenerator:
     def generate_email(self, name: str = None) -> str:
         if not name:
             name = self.generate_name()
-        # Remove any non-alphanumeric characters and lowercase the string
         clean_name = ''.join(c for c in name if c.isalnum()).lower()
-        domain = random.choice(["example.com", "test.com.br", "email.com"])
+        domain = random.choice(["example.com", "test.com.br", "email.com", "gmail.com", "outlook.com", "yahoo.com", "hotmail.com"])
         return f"{clean_name}@{domain}"
 
     def generate_full_data(self) -> dict:
@@ -140,13 +133,13 @@ class DataGenerator:
             "Address": self.generate_address(),
             "Postal Code": self.generate_postal_code(),
             "Phone": self.generate_phone(),
-            "Email": None  # Will be generated based on the name
+            "Email": None
         }
         data["Email"] = self.generate_email(data["Name"])
         return data
 
 
-# Dictionary mapping data types to their friendly name and generation function
+# Dictionary mapping data types to friendly name and generation function
 GENERATORS = {
     "cpf": ("CPF", lambda gen: gen.generate_cpf()),
     "cnpj": ("CNPJ", lambda gen: gen.generate_cnpj()),
@@ -178,7 +171,6 @@ class KeywordQueryEventListener(EventListener):
         query = (event.get_argument() or "").lower().strip()
         items = []
 
-        # If the user specifies a valid type, generate only that data.
         if query in GENERATORS:
             friendly_name, gen_func = GENERATORS[query]
             items.append(
@@ -192,7 +184,6 @@ class KeywordQueryEventListener(EventListener):
             )
             return RenderResultListAction(items)
 
-        # If no specific type is provided, list all available options.
         for key, (friendly_name, _) in sorted(GENERATORS.items()):
             items.append(
                 ExtensionSmallResultItem(
@@ -201,7 +192,6 @@ class KeywordQueryEventListener(EventListener):
                     on_enter=ExtensionCustomAction(key, keep_app_open=True)
                 )
             )
-
         return RenderResultListAction(items)
 
 
@@ -210,7 +200,6 @@ class ItemEnterEventListener(EventListener):
         self.generator = generator
 
     def on_event(self, event, extension):
-        # The selected provider is received via ExtensionCustomAction
         provider = event.get_data()
         if provider in GENERATORS:
             friendly_name, gen_func = GENERATORS[provider]
