@@ -1,97 +1,239 @@
 import random
+import datetime
+import string
+import logging
+
 from ulauncher.api.client.Extension import Extension
 from ulauncher.api.client.EventListener import EventListener
-from ulauncher.api.shared.event import KeywordQueryEvent
+from ulauncher.api.shared.event import KeywordQueryEvent, ItemEnterEvent
 from ulauncher.api.shared.item.ExtensionResultItem import ExtensionResultItem
+from ulauncher.api.shared.item.ExtensionSmallResultItem import ExtensionSmallResultItem
 from ulauncher.api.shared.action.RenderResultListAction import RenderResultListAction
 from ulauncher.api.shared.action.CopyToClipboardAction import CopyToClipboardAction
+from ulauncher.api.shared.action.HideWindowAction import HideWindowAction
+from ulauncher.api.shared.action.ExtensionCustomAction import ExtensionCustomAction
 
-# Functions to generate valid CPF and CNPJ
-def gerar_cpf(formatted: bool = True) -> str:
-    cpf = [random.randint(0, 9) for _ in range(9)]
-    soma = sum((10 - i) * cpf[i] for i in range(9))
-    resto = soma % 11
-    cpf.append(0 if resto < 2 else 11 - resto)
-    soma = sum((11 - i) * cpf[i] for i in range(10))
-    resto = soma % 11
-    cpf.append(0 if resto < 2 else 11 - resto)
-    cpf_str = ''.join(map(str, cpf))
-    if formatted:
-        return f"{cpf_str[:3]}.{cpf_str[3:6]}.{cpf_str[6:9]}-{cpf_str[9:]}"
-    return cpf_str
+logger = logging.getLogger(__name__)
 
-def gerar_cnpj(formatted: bool = True) -> str:
-    cnpj = [random.randint(0, 9) for _ in range(12)]
-    pesos_primeiro = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
-    soma = sum(cnpj[i] * pesos_primeiro[i] for i in range(12))
-    resto = soma % 11
-    cnpj.append(0 if resto < 2 else 11 - resto)
-    pesos_segundo = [6] + pesos_primeiro
-    soma = sum(cnpj[i] * pesos_segundo[i] for i in range(13))
-    resto = soma % 11
-    cnpj.append(0 if resto < 2 else 11 - resto)
-    cnpj_str = ''.join(map(str, cnpj))
-    if formatted:
-        return f"{cnpj_str[:2]}.{cnpj_str[2:5]}.{cnpj_str[5:8]}/{cnpj_str[8:12]}-{cnpj_str[12:]}"
-    return cnpj_str
 
-class DocumentGeneratorExtension(Extension):
+def calculate_digit(numbers, weights):
+    total = sum(int(n) * p for n, p in zip(numbers, weights))
+    remainder = total % 11
+    return '0' if remainder < 2 else str(11 - remainder)
+
+
+def generate_random_number(count):
+    return ''.join(random.choice(string.digits) for _ in range(count))
+
+
+class DataGenerator:
     def __init__(self):
-        super(DocumentGeneratorExtension, self).__init__()
-        self.subscribe(KeywordQueryEvent, KeywordQueryEventListener())
+        # Lists of sample data in Portuguese
+        self.first_names = [
+            "Ana", "Bruno", "Carlos", "Daniela", "Eduardo", "Fernanda",
+            "Gabriel", "Helena", "Igor", "Juliana", "Lucas", "Mariana"
+        ]
+        self.last_names = [
+            "Silva", "Souza", "Costa", "Santos", "Oliveira", "Pereira",
+            "Rodrigues", "Almeida", "Lima", "Gomes"
+        ]
+        self.streets = [
+            "Rua das Flores", "Avenida Brasil", "Travessa da Paz", "Alameda dos Anjos",
+            "Rua do Sol"
+        ]
+        self.cities = [
+            "São Paulo", "Rio de Janeiro", "Belo Horizonte", "Curitiba", "Porto Alegre"
+        ]
+        self.states = ["SP", "RJ", "MG", "PR", "RS"]
+
+    def generate_cpf(self, formatted=True) -> str:
+        nine_digits = generate_random_number(9)
+        first_weights = list(range(10, 1, -1))
+        first_digit = calculate_digit(nine_digits, first_weights)
+        second_weights = list(range(11, 1, -1))
+        second_digit = calculate_digit(nine_digits + first_digit, second_weights)
+        cpf = nine_digits + first_digit + second_digit
+        if formatted:
+            return "{}.{}.{}-{}".format(cpf[:3], cpf[3:6], cpf[6:9], cpf[9:])
+        return cpf
+
+    def generate_cnpj(self, formatted=True) -> str:
+        root = generate_random_number(8)
+        suffix = "0001"
+        numbers = root + suffix
+        first_weights = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+        first_digit = calculate_digit(numbers, first_weights)
+        second_weights = [6] + first_weights
+        second_digit = calculate_digit(numbers + first_digit, second_weights)
+        cnpj = numbers + first_digit + second_digit
+        if formatted:
+            return "{}.{}.{}/{}-{}".format(cnpj[:2], cnpj[2:5], cnpj[5:8], cnpj[8:12], cnpj[12:])
+        return cnpj
+
+    def generate_rg(self, formatted=False) -> str:
+        rg = generate_random_number(9)
+        if formatted:
+            return "{}.{}.{}-{}".format(rg[:2], rg[2:5], rg[5:8], rg[8])
+        return rg
+
+    def generate_name(self) -> str:
+        first = random.choice(self.first_names)
+        last = random.choice(self.last_names)
+        return f"{first} {last}"
+
+    def generate_address(self) -> str:
+        street = random.choice(self.streets)
+        number = random.randint(1, 2000)
+        complement = random.choice([f"Apt {random.randint(1, 500)}", "", "House"])
+        city = random.choice(self.cities)
+        state = random.choice(self.states)
+        address = f"{street}, {number}"
+        if complement:
+            address += f", {complement}"
+        address += f" - {city}/{state}"
+        return address
+
+    def generate_postal_code(self, with_dash=True) -> str:
+        postal = generate_random_number(8)
+        if with_dash:
+            return f"{postal[:5]}-{postal[5:]}"
+        return postal
+
+    def generate_phone(self, with_ddd=True) -> str:
+        ddd = generate_random_number(2) if with_ddd else ""
+        # Randomly choose between a mobile (9 digits) or landline (8 digits)
+        if random.choice([True, False]):
+            # Mobile: starts with 9 and has 9 digits
+            number = "9" + generate_random_number(8)
+        else:
+            number = generate_random_number(8)
+        if ddd:
+            if len(number) == 9:
+                return f"({ddd}) {number[:5]}-{number[5:]}"
+            else:
+                return f"({ddd}) {number[:4]}-{number[4:]}"
+        return number
+
+    def generate_birth_date(self, start="1950-01-01", end="2010-12-31") -> str:
+        start_date = datetime.datetime.strptime(start, "%Y-%m-%d")
+        end_date = datetime.datetime.strptime(end, "%Y-%m-%d")
+        delta = end_date - start_date
+        random_days = random.randint(0, delta.days)
+        birth_date = start_date + datetime.timedelta(days=random_days)
+        return birth_date.strftime("%d/%m/%Y")
+
+    def generate_email(self, name: str = None) -> str:
+        if not name:
+            name = self.generate_name()
+        # Remove any non-alphanumeric characters and lowercase the string
+        clean_name = ''.join(c for c in name if c.isalnum()).lower()
+        domain = random.choice(["example.com", "test.com.br", "email.com"])
+        return f"{clean_name}@{domain}"
+
+    def generate_full_data(self) -> dict:
+        data = {
+            "Name": self.generate_name(),
+            "Birth Date": self.generate_birth_date(),
+            "CPF": self.generate_cpf(),
+            "RG": self.generate_rg(formatted=True),
+            "CNPJ": self.generate_cnpj(),
+            "Address": self.generate_address(),
+            "Postal Code": self.generate_postal_code(),
+            "Phone": self.generate_phone(),
+            "Email": None  # Will be generated based on the name
+        }
+        data["Email"] = self.generate_email(data["Name"])
+        return data
+
+
+# Dictionary mapping data types to their friendly name and generation function
+GENERATORS = {
+    "cpf": ("CPF", lambda gen: gen.generate_cpf()),
+    "cnpj": ("CNPJ", lambda gen: gen.generate_cnpj()),
+    "rg": ("RG", lambda gen: gen.generate_rg(formatted=True)),
+    "name": ("Name", lambda gen: gen.generate_name()),
+    "address": ("Address", lambda gen: gen.generate_address()),
+    "postal": ("Postal Code", lambda gen: gen.generate_postal_code()),
+    "phone": ("Phone", lambda gen: gen.generate_phone()),
+    "birth": ("Birth Date", lambda gen: gen.generate_birth_date()),
+    "email": ("Email", lambda gen: gen.generate_email()),
+    "full": ("Full Data", lambda gen: "\n".join(
+        f"{key}: {value}" for key, value in gen.generate_full_data().items()))
+}
+
+
+class EnglishDataExtension(Extension):
+    def __init__(self):
+        super(EnglishDataExtension, self).__init__()
+        self.generator = DataGenerator()
+        self.subscribe(KeywordQueryEvent, KeywordQueryEventListener(self.generator))
+        self.subscribe(ItemEnterEvent, ItemEnterEventListener(self.generator))
+
 
 class KeywordQueryEventListener(EventListener):
+    def __init__(self, generator):
+        self.generator = generator
+
     def on_event(self, event, extension):
         query = (event.get_argument() or "").lower().strip()
         items = []
-        
-        # If the user types "cpf", show CPF only.
-        if query == "cpf":
-            cpf = gerar_cpf(formatted=True)
+
+        # If the user specifies a valid type, generate only that data.
+        if query in GENERATORS:
+            friendly_name, gen_func = GENERATORS[query]
             items.append(
                 ExtensionResultItem(
-                    icon='images/cpf.png',
-                    name=cpf,
-                    description='Valid CPF generated and copied to clipboard',
+                    icon=f'images/{query}.png' if query in ["cpf", "cnpj"] else 'images/icon.png',
+                    name=friendly_name,
+                    description=f"Generates {friendly_name} and copies it to clipboard",
                     highlightable=False,
-                    on_enter=CopyToClipboardAction(cpf)
+                    on_enter=CopyToClipboardAction(gen_func(self.generator))
                 )
             )
-        # If the user types "cnpj", show CNPJ only.
-        elif query == "cnpj":
-            cnpj = gerar_cnpj(formatted=True)
+            return RenderResultListAction(items)
+
+        # If no specific type is provided, list all available options.
+        for key, (friendly_name, _) in sorted(GENERATORS.items()):
             items.append(
-                ExtensionResultItem(
-                    icon='images/cnpj.png',
-                    name=cnpj,
-                    description='Valid CNPJ generated and copied to clipboard',
-                    highlightable=False,
-                    on_enter=CopyToClipboardAction(cnpj)
+                ExtensionSmallResultItem(
+                    icon=f'images/{key}.png' if key in ["cpf", "cnpj"] else 'images/icon.png',
+                    name=friendly_name,
+                    on_enter=ExtensionCustomAction(key, keep_app_open=True)
                 )
             )
-        # Otherwise, show both options.
-        else:
-            cpf = gerar_cpf(formatted=True)
-            cnpj = gerar_cnpj(formatted=True)
-            items.append(
-                ExtensionResultItem(
-                    icon='images/cpf.png',
-                    name=cpf,
-                    description='Valid CPF generated and copied to clipboard',
-                    highlightable=False,
-                    on_enter=CopyToClipboardAction(cpf)
-                )
-            )
-            items.append(
-                ExtensionResultItem(
-                    icon='images/cnpj.png',
-                    name=cnpj,
-                    description='Valid CNPJ generated and copied to clipboard',
-                    highlightable=False,
-                    on_enter=CopyToClipboardAction(cnpj)
-                )
-            )
+
         return RenderResultListAction(items)
 
+
+class ItemEnterEventListener(EventListener):
+    def __init__(self, generator):
+        self.generator = generator
+
+    def on_event(self, event, extension):
+        # The selected provider is received via ExtensionCustomAction
+        provider = event.get_data()
+        if provider in GENERATORS:
+            friendly_name, gen_func = GENERATORS[provider]
+            value = gen_func(self.generator)
+            return RenderResultListAction([
+                ExtensionResultItem(
+                    icon=f'images/{provider}.png' if provider in ["cpf", "cnpj"] else 'images/icon.png',
+                    name=str(value),
+                    description=f"{friendly_name} generated and copied to clipboard",
+                    highlightable=False,
+                    on_enter=CopyToClipboardAction(value)
+                )
+            ])
+        else:
+            return RenderResultListAction([
+                ExtensionResultItem(
+                    icon='images/icon.png',
+                    name="Type not found",
+                    highlightable=False,
+                    on_enter=HideWindowAction()
+                )
+            ])
+
+
 if __name__ == '__main__':
-    DocumentGeneratorExtension().run()
+    EnglishDataExtension().run()

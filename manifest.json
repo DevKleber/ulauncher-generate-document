@@ -1,9 +1,9 @@
 {
     "required_api_version": "^2.0.0",
-    "name": "CPF and CNPJ Generator",
-    "description": "Generates valid CPF and CNPJ numbers and copies them to the clipboard",
+    "name": "Brazilian Data Generator",
+    "description": "Generates a wide range of valid Brazilian data, including CPF, CNPJ, RG, names, addresses, postal codes, phone numbers, birth dates, and email addresses, all ready to be copied to the clipboard",
     "developer_name": "Kleber de Souza",
-    "icon": "images/cpfcnpj.png",
+    "icon": "images/doc.png",
     "options": {
         "query_debounce": 0.05
     },
@@ -12,7 +12,7 @@
             "id": "keyword",
             "type": "keyword",
             "name": "Keyword",
-            "default_value": "doc"
+            "default_value": "fakerbr"
         },
         {
             "id": "stay_open",
