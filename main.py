@@ -1,3 +1,4 @@
+import os
 import random
 import datetime
 import string
@@ -13,7 +14,7 @@ from ulauncher.api.shared.action.CopyToClipboardAction import CopyToClipboardAct
 from ulauncher.api.shared.action.HideWindowAction import HideWindowAction
 from ulauncher.api.shared.action.ExtensionCustomAction import ExtensionCustomAction
 
-# Import data from separate files
+# Import data from separate files inside the "datafaker" folder
 from datafaker.first_names import first_names
 from datafaker.last_names import last_names
 from datafaker.streets import streets
@@ -32,14 +33,18 @@ def generate_random_number(count):
     return ''.join(random.choice(string.digits) for _ in range(count))
 
 
+def get_icon(key, default='images/icon.png'):
+    icon_path = f'images/{key}.png'
+    return icon_path if os.path.exists(icon_path) else default
+
+
 class DataGenerator:
     def __init__(self):
         # Use imported data lists
         self.first_names = first_names
         self.last_names = last_names
         self.streets = streets
-        # Não precisamos mais de uma lista de cidades e estados separados,
-        # pois o dicionário 'municipalities' já mapeia os estados para seus municípios.
+        # We use the 'municipalities' dictionary to map states to their cities
 
     def generate_cpf(self, formatted=True) -> str:
         nine_digits = generate_random_number(9)
@@ -80,7 +85,7 @@ class DataGenerator:
         street = random.choice(self.streets)
         number = random.randint(1, 2000)
         complement = random.choice([f"Apt {random.randint(1, 500)}", "", "House"])
-        # Sorteia um estado (a chave do dicionário) e depois um município deste estado.
+        # Choose a state (key from the municipalities dict) and a city from that state.
         state = random.choice(list(municipalities.keys()))
         city = random.choice(municipalities[state])
         address = f"{street}, {number}"
@@ -97,6 +102,7 @@ class DataGenerator:
 
     def generate_phone(self, with_ddd=True) -> str:
         ddd = generate_random_number(2) if with_ddd else ""
+        # Randomly choose between a mobile (9 digits) or landline (8 digits)
         if random.choice([True, False]):
             number = "9" + generate_random_number(8)
         else:
@@ -120,7 +126,10 @@ class DataGenerator:
         if not name:
             name = self.generate_name()
         clean_name = ''.join(c for c in name if c.isalnum()).lower()
-        domain = random.choice(["example.com", "test.com.br", "email.com", "gmail.com", "outlook.com", "yahoo.com", "hotmail.com"])
+        domain = random.choice([
+            "example.com", "test.com.br", "email.com",
+            "gmail.com", "outlook.com", "yahoo.com", "hotmail.com"
+        ])
         return f"{clean_name}@{domain}"
 
     def generate_full_data(self) -> dict:
@@ -175,7 +184,7 @@ class KeywordQueryEventListener(EventListener):
             friendly_name, gen_func = GENERATORS[query]
             items.append(
                 ExtensionResultItem(
-                    icon=f'images/{query}.png' if query in ["cpf", "cnpj"] else 'images/icon.png',
+                    icon=get_icon(query, default='images/icon.png'),
                     name=friendly_name,
                     description=f"Generates {friendly_name} and copies it to clipboard",
                     highlightable=False,
@@ -187,7 +196,7 @@ class KeywordQueryEventListener(EventListener):
         for key, (friendly_name, _) in sorted(GENERATORS.items()):
             items.append(
                 ExtensionSmallResultItem(
-                    icon=f'images/{key}.png' if key in ["cpf", "cnpj"] else 'images/icon.png',
+                    icon=get_icon(key, default='images/doc.png'),
                     name=friendly_name,
                     on_enter=ExtensionCustomAction(key, keep_app_open=True)
                 )
@@ -206,7 +215,7 @@ class ItemEnterEventListener(EventListener):
             value = gen_func(self.generator)
             return RenderResultListAction([
                 ExtensionResultItem(
-                    icon=f'images/{provider}.png' if provider in ["cpf", "cnpj"] else 'images/icon.png',
+                    icon=get_icon(provider, default='images/icon.png'),
                     name=str(value),
                     description=f"{friendly_name} generated and copied to clipboard",
                     highlightable=False,
